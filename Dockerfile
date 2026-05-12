@@ -3,10 +3,9 @@ FROM maven:3.9-eclipse-temurin-17 AS build
 WORKDIR /app
 COPY . .
 RUN mvn clean install -DskipTests -pl site -am
-RUN find site/target/ -name "site-*.jar" ! -name "*.original" -exec cp {} /app/site-ready.jar \;
 #esta imagen de java lo que hará es ejecutar el sitio en sí mimso
 FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
-COPY --from=build /app/site-ready.jar app.jar
+COPY --from=build /app/site/target/*.jar ./
 EXPOSE 8080
-ENTRYPOINT ["java", "-Xmx512M", "-Xms256M", "-Dspring.profiles.active=development", "-jar", "app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Xmx512M -Dspring.profiles.active=development -jar $(ls site*.jar | grep -v \"original\" | head -n 1)"]
